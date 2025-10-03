@@ -1,0 +1,4 @@
+# ExecuTorch builds for VCMI
+
+This repository contains prebuilt torch libraries for VCMI's ML-powered "MMAI".
+

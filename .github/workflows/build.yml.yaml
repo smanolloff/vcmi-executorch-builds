@@ -1,0 +1,169 @@
+name: VCMI executorch builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      pytorch_ref:
+        description: "executorch ref (commit SHA or tag)"
+        required: true
+        default: "v0.7.0"  # 4b9d44206a99c1ce39315487599971b257a02ed8
+      target:
+        description: "Target to build"
+        type: choice
+        default: all
+        options:
+          - all
+          - win-x64
+          - win-x32
+          - win-arm64
+          - linux-x64
+          - macos-x64
+          - macos-arm64
+          - ios-arm64
+          - android-arm64
+          - android-armv7
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+        # https://github.com/actions/runner-images/tree/main
+        include:
+          - builder: ubuntu-latest
+            target: linux-x64
+            build_type: Release
+
+          - builder: windows-2025
+            target: win-x64
+            build_type: RelWithDebInfo
+
+          - builder: windows-2025
+            target: win-x64
+            build_type: RelWithDebInfo
+
+          - builder: windows-11-arm
+            target: win-arm64
+            build_type: RelWithDebInfo
+
+          - builder: macos-15-intel
+            target: macos-x64
+            build_type: Release
+
+          - builder: macos-15
+            target: macos-arm64
+            build_type: Release
+
+          - builder: macos-15
+            target: ios-arm64
+            build_type: Release
+
+          - builder: ubuntu-latest
+            target: android-arm64
+            build_type: Release
+
+          - builder: ubuntu-latest
+            target: android-armv7
+            build_type: Release
+
+
+    runs-on: ${{ matrix.builder }}
+    defaults:
+      run:
+        shell: bash
+
+    # Tell cargo explicitly which linker to use for aarch64-pc-windows-msvc
+    - name: Configure cargo linker (win-arm64)
+      if: matrix.target == 'win-arm64'
+      run: |
+        link="$VCToolsInstallDir/bin/HostARM64/arm64/link.exe"
+        echo "CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER=$link" >> "$GITHUB_ENV"
+
+    - name: Setup Rust toolchain (win-arm64)
+      uses: dtolnay/rust-toolchain@stable
+      if: matrix.target == 'win-arm64'
+      with:
+        toolchain: nightly-2025-02-16
+        targets: aarch64-pc-windows-msvc
+
+    - name: Install buck2 (win-arm64)
+      if: matrix.target == 'win-arm64'
+      run: |
+        set -x
+        tag_url='https://github.com/facebook/buck2/releases/download/2025-05-06/buck2-x86_64-pc-windows-msvc.exe.zst'
+        zst="$RUNNER_TEMP/buck2.exe.zst"
+        exe="$RUNNER_TEMP/buck2.exe"
+        curl -LfS -o "$zst" "$tag_url"
+        7z x -so "$zst" > "$exe"
+        echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+        export PATH="$PATH:$RUNNER_TEMP"
+        buck2 --version
+        "$exe" --version || buck2 --version
+
+    - name: Restore executorch_src cache
+      id: cache_executorch_src
+      uses: actions/cache@v4
+      with:
+        path: executorch
+        key: cache_executorch_src
+
+    - name: Checkout executorch
+      uses: actions/checkout@v4
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
+      with:
+        submodules: recursive
+        repository: pytorch/executorch
+        ref: v0.7.0
+        path: executorch
+
+    - name: Save executorch_src cache
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: executorch
+        key: cache_executorch_src
+
+    - name: Restore executorch_prebuild cache
+      id: cache_executorch_prebuild
+      uses: actions/cache@v4
+      with:
+        path: executorch
+        key: cache_executorch_prebuild-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+      with:
+        python-version: 3.12
+        cache: pip
+        cache-dependency-path: executorch/requirements-dev.txt
+
+    - name: Install executorch requirements
+      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+      run: source install_requirements.sh ${{ matrix.target }}
+
+    - name: Save executorch_prebuild cache
+      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: executorch
+        key: cache_executorch_prebuild-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
+
+    - name: Restore executorch_build cache
+      id: cache_executorch_build
+      uses: actions/cache@v4
+      with:
+        path: executorch
+        key: cache_executorch_build-${{ matrix.target }}-${{ hashFiles('build.sh') }}
+
+    - name: Build executorch dependency
+      if: steps.cache_executorch_build.outputs.cache-hit != 'true'
+      run: source build.sh ${{ matrix.target }} ${{ matrix.build_type }}
+
+    - name: Save executorch_build cache
+      if: steps.cache_executorch_build.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: executorch
+        key: cache_executorch_build-${{ matrix.target }}-${{ hashFiles('build.sh') }}
