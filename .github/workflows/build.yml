@@ -14,7 +14,7 @@ on:
         options:
           - all
           - win-x64
-          - win-x32
+          - win-x86
           - win-arm64
           - linux-x64
           - macos-x64
@@ -22,6 +22,7 @@ on:
           - ios-arm64
           - android-arm64
           - android-armv7
+          - android-x64
 
 jobs:
   build:
@@ -40,7 +41,7 @@ jobs:
           build_type: RelWithDebInfo
 
         - builder: windows-2025
-          target: win-x64
+          target: win-x86
           build_type: RelWithDebInfo
 
         - builder: windows-11-arm
@@ -65,6 +66,10 @@ jobs:
 
         - builder: ubuntu-latest
           target: android-armv7
+          build_type: Release
+
+        - builder: ubuntu-latest
+          target: android-x64
           build_type: Release
 
 
