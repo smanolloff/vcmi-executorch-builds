@@ -72,24 +72,27 @@ jobs:
     defaults:
       run:
         shell: bash
-
     steps:
+    - name: Checkout (this)
+      if: ${{ inputs.target == matrix.target || inputs.target == 'all' }}
+      uses: actions/checkout@v5
+
     # Tell cargo explicitly which linker to use for aarch64-pc-windows-msvc
     - name: Configure cargo linker (win-arm64)
-      if: matrix.target == 'win-arm64'
+      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
       run: |
         link="$VCToolsInstallDir/bin/HostARM64/arm64/link.exe"
         echo "CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER=$link" >> "$GITHUB_ENV"
 
     - name: Setup Rust toolchain (win-arm64)
       uses: dtolnay/rust-toolchain@stable
-      if: matrix.target == 'win-arm64'
+      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
       with:
         toolchain: nightly-2025-02-16
         targets: aarch64-pc-windows-msvc
 
     - name: Install buck2 (win-arm64)
-      if: matrix.target == 'win-arm64'
+      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
       run: |
         set -x
         tag_url='https://github.com/facebook/buck2/releases/download/2025-05-06/buck2-x86_64-pc-windows-msvc.exe.zst'
@@ -103,6 +106,7 @@ jobs:
         "$exe" --version || buck2 --version
 
     - name: Restore executorch_src cache
+      if: inputs.target == matrix.target || inputs.target == 'all'
       id: cache_executorch_src
       uses: actions/cache@v4
       with:
@@ -110,6 +114,7 @@ jobs:
         key: cache_executorch_src
 
     - name: Checkout executorch
+      if: inputs.target == matrix.target || inputs.target == 'all'
       uses: actions/checkout@v4
       if: steps.cache_executorch_src.outputs.cache-hit != 'true'
       with:
@@ -119,52 +124,39 @@ jobs:
         path: executorch
 
     - name: Save executorch_src cache
-      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
       uses: actions/cache/save@v4
       with:
         path: executorch
         key: cache_executorch_src
 
-    - name: Restore executorch_prebuild cache
-      id: cache_executorch_prebuild
+    - name: Restore requirements cache
+      if: inputs.target == matrix.target || inputs.target == 'all'
+      id: requirements
       uses: actions/cache@v4
       with:
         path: executorch
-        key: cache_executorch_prebuild-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
+        key: requirements-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
-      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
       with:
         python-version: 3.12
         cache: pip
         cache-dependency-path: executorch/requirements-dev.txt
 
     - name: Install executorch requirements
-      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
       run: source install_requirements.sh ${{ matrix.target }}
 
-    - name: Save executorch_prebuild cache
-      if: steps.cache_executorch_prebuild.outputs.cache-hit != 'true'
+    - name: Save requirements cache
+      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
       uses: actions/cache/save@v4
       with:
         path: executorch
-        key: cache_executorch_prebuild-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
-
-    - name: Restore executorch_build cache
-      id: cache_executorch_build
-      uses: actions/cache@v4
-      with:
-        path: executorch
-        key: cache_executorch_build-${{ matrix.target }}-${{ hashFiles('build.sh') }}
+        key: requirements-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
 
     - name: Build executorch dependency
-      if: steps.cache_executorch_build.outputs.cache-hit != 'true'
+      if: inputs.target == matrix.target || inputs.target == 'all'
       run: source build.sh ${{ matrix.target }} ${{ matrix.build_type }}
-
-    - name: Save executorch_build cache
-      if: steps.cache_executorch_build.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
-      with:
-        path: executorch
-        key: cache_executorch_build-${{ matrix.target }}-${{ hashFiles('build.sh') }}
