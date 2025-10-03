@@ -48,9 +48,9 @@ jobs:
           target: win-arm64
           build_type: RelWithDebInfo
 
-        - builder: macos-15-intel
-          target: macos-x64
-          build_type: Release
+        # - builder: macos-15-intel
+        #   target: macos-x64
+        #   build_type: Release
 
         - builder: macos-15
           target: macos-arm64
@@ -83,7 +83,7 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Git config
-      if: startsWith(matrix.builder, 'windows') && (inputs.target == matrix.target || inputs.target == 'all') }}
+      if: startsWith(matrix.builder, 'windows') && (inputs.target == matrix.target || inputs.target == 'all')
       run: |
         git config --global core.longpaths true
         git config --global core.autocrlf true
