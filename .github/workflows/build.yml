@@ -82,6 +82,12 @@ jobs:
       if: ${{ inputs.target == matrix.target || inputs.target == 'all' }}
       uses: actions/checkout@v5
 
+    - name: Git config
+      if: startsWith(matrix.builder, 'windows') && (inputs.target == matrix.target || inputs.target == 'all') }}
+      run: |
+        git config --global core.longpaths true
+        git config --global core.autocrlf true
+
     # Tell cargo explicitly which linker to use for aarch64-pc-windows-msvc
     - name: Configure cargo linker (win-arm64)
       if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
