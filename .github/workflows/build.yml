@@ -48,6 +48,7 @@ jobs:
           target: win-arm64
           build_type: RelWithDebInfo
 
+        # Prebuilt PyTorch wheels are no longer available for Intel-based macOS
         # - builder: macos-15-intel
         #   target: macos-x64
         #   build_type: Release
