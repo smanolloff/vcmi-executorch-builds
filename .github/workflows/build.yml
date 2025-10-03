@@ -31,41 +31,41 @@ jobs:
         # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
         # https://github.com/actions/runner-images/tree/main
         include:
-          - builder: ubuntu-latest
-            target: linux-x64
-            build_type: Release
+        - builder: ubuntu-latest
+          target: linux-x64
+          build_type: Release
 
-          - builder: windows-2025
-            target: win-x64
-            build_type: RelWithDebInfo
+        - builder: windows-2025
+          target: win-x64
+          build_type: RelWithDebInfo
 
-          - builder: windows-2025
-            target: win-x64
-            build_type: RelWithDebInfo
+        - builder: windows-2025
+          target: win-x64
+          build_type: RelWithDebInfo
 
-          - builder: windows-11-arm
-            target: win-arm64
-            build_type: RelWithDebInfo
+        - builder: windows-11-arm
+          target: win-arm64
+          build_type: RelWithDebInfo
 
-          - builder: macos-15-intel
-            target: macos-x64
-            build_type: Release
+        - builder: macos-15-intel
+          target: macos-x64
+          build_type: Release
 
-          - builder: macos-15
-            target: macos-arm64
-            build_type: Release
+        - builder: macos-15
+          target: macos-arm64
+          build_type: Release
 
-          - builder: macos-15
-            target: ios-arm64
-            build_type: Release
+        - builder: macos-15
+          target: ios-arm64
+          build_type: Release
 
-          - builder: ubuntu-latest
-            target: android-arm64
-            build_type: Release
+        - builder: ubuntu-latest
+          target: android-arm64
+          build_type: Release
 
-          - builder: ubuntu-latest
-            target: android-armv7
-            build_type: Release
+        - builder: ubuntu-latest
+          target: android-armv7
+          build_type: Release
 
 
     runs-on: ${{ matrix.builder }}
@@ -73,6 +73,7 @@ jobs:
       run:
         shell: bash
 
+    steps:
     # Tell cargo explicitly which linker to use for aarch64-pc-windows-msvc
     - name: Configure cargo linker (win-arm64)
       if: matrix.target == 'win-arm64'
