@@ -114,9 +114,8 @@ jobs:
         key: cache_executorch_src
 
     - name: Checkout executorch
-      if: inputs.target == matrix.target || inputs.target == 'all'
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
       uses: actions/checkout@v4
-      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
       with:
         submodules: recursive
         repository: pytorch/executorch
