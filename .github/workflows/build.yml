@@ -177,7 +177,7 @@ jobs:
         set -x
         source build.sh ${{ matrix.target }} ${{ matrix.build_type }}
 
-        export OUTPUT_ARCHIVE_FILE=executorch-${{matrix.target}}.txz
+        export OUTPUT_ARCHIVE_FILE=vcmi-executorch-${{matrix.target}}.txz
         tar --create --xz --file "../$OUTPUT_ARCHIVE_FILE" -C out executorch
         echo "artifact=$OUTPUT_ARCHIVE_FILE" >> $GITHUB_OUTPUT
 
