@@ -134,6 +134,6 @@ cp ../install_headers.cmake ./
 
 git -c core.autocrlf=false apply ../patch/xnndebug.patch
 
-cmake --preset mmai-executorch-release "${flags[@]}"
-cmake --build --preset mmai-executorch-release --config $BUILD_TYPE -j3
-cmake --preset mmai-executorch-release -P install_headers.cmake
+cmake --preset executorch-release "${flags[@]}"
+cmake --build --preset executorch-release --config $BUILD_TYPE -j3
+cmake --preset executorch-release -P install_headers.cmake
