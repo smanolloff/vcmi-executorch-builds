@@ -13,7 +13,7 @@ win-arm64)
     . .venv/Scripts/activate
     pip install setuptools_rust
     export PYTHON_EXECUTABLE=$VIRTUAL_ENV/Scripts/python.exe
-    git -c core.autocrlf=false apply --whitespace=nowarn ../../executorch/patch/windows-arm64.patch
+    git -c core.autocrlf=false apply --whitespace=nowarn ../patch/windows-arm64.patch
     ;;
 win-x64)
     . .venv/Scripts/activate
