@@ -7,10 +7,12 @@
     ],
     "configurePresets": [
         {
-            "name": "mmai-executorch-common",
+            "name": "executorch-common",
             "hidden": true,
             "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/out/build",
             "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/executorch",
                 "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
                 "EXECUTORCH_ENABLE_PROGRAM_VERIFICATION": "ON",
                 "EXECUTORCH_BUILD_SIZE_TEST": "OFF",
@@ -55,12 +57,10 @@
             }
         },
         {
-            "name": "mmai-executorch-debug",
-            "inherits": "mmai-executorch-common",
-            "binaryDir": "${sourceDir}/build-debug",
+            "name": "executorch-debug",
+            "inherits": "executorch-common",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-debug",
                 "EXECUTORCH_BUILD_DEVTOOLS": "ON",
                 "EXECUTORCH_ENABLE_EVENT_TRACER": "ON",
                 "EXECUTORCH_ENABLE_LOGGING": "ON",
@@ -68,12 +68,10 @@
             }
         },
         {
-            "name": "mmai-executorch-release",
-            "inherits": "mmai-executorch-common",
-            "binaryDir": "${sourceDir}/build-release",
+            "name": "executorch-release",
+            "inherits": "executorch-common",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-release",
                 "EXECUTORCH_BUILD_DEVTOOLS": "OFF",
                 "EXECUTORCH_ENABLE_EVENT_TRACER": "OFF",
                 "EXECUTORCH_ENABLE_LOGGING": "OFF",
@@ -83,15 +81,15 @@
     ],
     "buildPresets": [
         {
-            "name": "mmai-executorch-debug",
-            "configurePreset": "mmai-executorch-debug",
+            "name": "executorch-debug",
+            "configurePreset": "executorch-debug",
             "targets": ["install"],
             "cleanFirst": true
 
         },
         {
-            "name": "mmai-executorch-release",
-            "configurePreset": "mmai-executorch-release",
+            "name": "executorch-release",
+            "configurePreset": "executorch-release",
             "targets": ["install"],
             "cleanFirst": true
         }
