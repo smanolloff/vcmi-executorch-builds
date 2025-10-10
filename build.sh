@@ -30,7 +30,6 @@ android-*)
     . .venv/bin/activate
     args=(
         -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
-        -DPYTHON_EXECUTABLE="$VIRTUAL_ENV/bin/python.exe"
     )
     ;;
 *)
