@@ -1,19 +1,53 @@
 {
     "version": 10,
     "$comment": [
-        "This file is used for compiling executorch from source and",
-        "must be copied into the executorch root dir.",
-        "See comments in MMAI/CMakeLists.txt for more info."
+        "To switch between debug/release builds, change the 'inherits' value",
+        "of the 'common' preset to base-debug or base-release.",
+        "(do this for both confugurePresets and buildPresets)",
+        "",
+        "NOTES:",
+        "1. Building on windows also requires the below cmake flags:",
+        "      -G 'Visual Studio 17 2022' -T ClangCL -A ARM64",
+        "   Additionally, applying custom patches to some source files is needed",
+        "   (see patch/ subdir in vcmi/AI/MMAI/executorch).",
+        "   Builds on GHA are successful with these tweaks, but unfortunately",
+        "   they are not usable due to memory corruption issues at runtime",
+        "   (possibly caused by different size of C `long` type on windows).",
+        "   Future versions of executorch might eventually fix this."
     ],
     "configurePresets": [
         {
-            "name": "executorch-common",
+            "name": "base-debug",
             "hidden": true,
-            "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/out/build",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "EXECUTORCH_BUILD_DEVTOOLS": "ON",
+                "EXECUTORCH_ENABLE_EVENT_TRACER": "ON",
+                "EXECUTORCH_ENABLE_LOGGING": "ON",
+                "EXECUTORCH_LOG_LEVEL": "Debug"
+            }
+        },
+        {
+            "name": "base-release",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "EXECUTORCH_BUILD_DEVTOOLS": "OFF",
+                "EXECUTORCH_ENABLE_EVENT_TRACER": "OFF",
+                "EXECUTORCH_ENABLE_LOGGING": "OFF",
+                "EXECUTORCH_LOG_LEVEL": "Info"
+            }
+        },
+        {
+            "name": "common",
+            "inherits": "base-release",
+            "$comment": ["Change the 'inherits' here for debug or release builds"],
+            "hidden": true,
+            "generator": "Unix Makefiles",
+            "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/executorch",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
                 "EXECUTORCH_ENABLE_PROGRAM_VERIFICATION": "ON",
                 "EXECUTORCH_BUILD_SIZE_TEST": "OFF",
                 "EXECUTORCH_OPTIMIZE_SIZE": "OFF",
@@ -57,41 +91,183 @@
             }
         },
         {
-            "name": "executorch-debug",
-            "inherits": "executorch-common",
+            "name": "win-arm64",
+            "inherits": "common",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "ARM64",
+            "toolset": "ClangCL",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "EXECUTORCH_BUILD_DEVTOOLS": "ON",
-                "EXECUTORCH_ENABLE_EVENT_TRACER": "ON",
-                "EXECUTORCH_ENABLE_LOGGING": "ON",
-                "EXECUTORCH_LOG_LEVEL": "Debug"
+                "CMAKE_PREFIX_PATH": "${env:VIRTUAL_ENV}/Lib/site-packages",
+                "PYTHON_EXECUTABLE": "${env:VIRTUAL_ENV}/Scripts/python.exe",
+                "CMAKE_C_FLAGS": "/clang:-march=armv8.2-a+fp16+dotprod+i8mm+bf16",
+                "CMAKE_CXX_FLAGS": "/EHsc /clang:-march=armv8.2-a+fp16+dotprod+i8mm+bf16",
+                "EXECUTORCH_BUILD_KERNELS_OPTIMIZED": "OFF",
+                "EXECUTORCH_BUILD_KERNELS_QUANTIZED": "OFF",
+                "XNNPACK_ENABLE_ASSEMBLY": "OFF"
             }
         },
         {
-            "name": "executorch-release",
-            "inherits": "executorch-common",
+            "name": "win-x64",
+            "inherits": "common",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64",
+            "toolset": "ClangCL",
+            "$comment": [
+                "See comment in backends/xnnpack/third-party/XNNPACK/CMakeLists.txt.",
+                "Turning off AVX* fixes a build error related to /vlen on GHA runners."
+            ],
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "EXECUTORCH_BUILD_DEVTOOLS": "OFF",
-                "EXECUTORCH_ENABLE_EVENT_TRACER": "OFF",
-                "EXECUTORCH_ENABLE_LOGGING": "OFF",
-                "EXECUTORCH_LOG_LEVEL": "Info"
+                "CMAKE_PREFIX_PATH": "${env:VIRTUAL_ENV}/Lib/site-packages",
+                "PYTHON_EXECUTABLE": "${env:VIRTUAL_ENV}/Scripts/python.exe",
+                "XNNPACK_ENABLE_AVX256SKX": "OFF",
+                "XNNPACK_ENABLE_AVX256VNNI": "OFF",
+                "XNNPACK_ENABLE_AVX256VNNIGFNI": "OFF",
+                "XNNPACK_ENABLE_AVX512BF16": "OFF"
+            }
+        },
+        {
+            "name": "win-x86",
+            "inherits": "common",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "Win32",
+            "toolset": "ClangCL",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "${env:VIRTUAL_ENV}/Lib/site-packages",
+                "PYTHON_EXECUTABLE": "${env:VIRTUAL_ENV}/Scripts/python.exe",
+                "XNNPACK_ENABLE_AVX256SKX": "OFF",
+                "XNNPACK_ENABLE_AVX256VNNI": "OFF",
+                "XNNPACK_ENABLE_AVX256VNNIGFNI": "OFF",
+                "XNNPACK_ENABLE_AVX512BF16": "OFF"
+            }
+        },
+        {
+            "name": "linux-x64",
+            "inherits": "common"
+        },
+        {
+            "name": "macos-arm64",
+            "inherits": "common",
+            "$comment": ["deployment target must match os.version in VCMI macos-arm conan profile"],
+            "cacheVariables": {
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+                "EXECUTORCH_BUILD_COREML": "ON"
+            }
+        },
+        {
+            "name": "ios-arm64",
+            "inherits": "common",
+            "$comment": [
+                "deployment target must match the one in VCMI's CMakeLists"
+            ],
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": "iOS",
+                "CMAKE_OSX_SYSROOT": "iphoneos",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "12.0",
+                "EXECUTORCH_BUILD_COREML": "ON"
+            }
+        },
+        {
+            "name": "android-arm64",
+            "inherits": "common",
+            "toolchainFile": "${env:ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+            "$comment": ["Platform must match os.api_level in VCMI android-64 conan profile"],
+            "cacheVariables": {
+                "ANDROID_ABI": "arm64-v8a",
+                "ANDROID_PLATFORM": "21",
+                "EXECUTORCH_BUILD_VULKAN": "ON"
+            }
+        },
+        {
+            "name": "android-armv7",
+            "inherits": "common",
+            "toolchainFile": "${env:ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+            "$comment": ["Platform must match os.api_level in VCMI android-32 conan profile"],
+            "cacheVariables": {
+                "ANDROID_ABI": "armeabi-v7a",
+                "ANDROID_ARM_NEON": "ON",
+                "ANDROID_PLATFORM": "19"
+            }
+        },
+        {
+            "name": "android-x64",
+            "inherits": "common",
+            "toolchainFile": "${env:ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+            "$comment": ["Platform must match os.api_level in VCMI android-x64 conan profile"],
+            "cacheVariables": {
+                "ANDROID_ABI": "x86_64",
+                "ANDROID_PLATFORM": "21"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "executorch-debug",
-            "configurePreset": "executorch-debug",
+            "name": "base-debug",
+            "hidden": true,
             "targets": ["install"],
-            "cleanFirst": true
-
+            "cleanFirst": true,
+            "$comment": ["On windows, 'configuration' is used instead of CMAKE_BUILD_TYPE"],
+            "configuration": "Debug"
         },
         {
-            "name": "executorch-release",
-            "configurePreset": "executorch-release",
+            "name": "base-release",
+            "hidden": true,
             "targets": ["install"],
-            "cleanFirst": true
+            "cleanFirst": true,
+            "$comment": ["On windows, 'configuration' is used instead of CMAKE_BUILD_TYPE"],
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "common",
+            "inherits": "base-release",
+            "$comment": ["Change the 'inherits' here for debug or release builds"],
+            "hidden": true
+        },
+        {
+            "name": "win-arm64",
+            "inherits": "common",
+            "configurePreset": "win-arm64"
+        },
+        {
+            "name": "win-x64",
+            "inherits": "common",
+            "configurePreset": "win-x64"
+        },
+        {
+            "name": "win-x86",
+            "inherits": "common",
+            "configurePreset": "win-x86"
+        },
+        {
+            "name": "linux-x64",
+            "inherits": "common",
+            "configurePreset": "linux-x64"
+        },
+        {
+            "name": "macos-arm64",
+            "inherits": "common",
+            "configurePreset": "macos-arm64"
+        },
+        {
+            "name": "ios-arm64",
+            "inherits": "common",
+            "configurePreset": "ios-arm64"
+        },
+        {
+            "name": "android-arm64",
+            "inherits": "common",
+            "configurePreset": "android-arm64"
+        },
+        {
+            "name": "android-armv7",
+            "inherits": "common",
+            "configurePreset": "android-armv7"
+        },
+        {
+            "name": "android-x64",
+            "inherits": "common",
+            "configurePreset": "android-x64"
         }
     ]
 }

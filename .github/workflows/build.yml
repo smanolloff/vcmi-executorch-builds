@@ -1,117 +1,112 @@
 name: VCMI executorch builds
 
 on:
+  push:
+    branches:
+      - tmp-builds
   workflow_dispatch:
     inputs:
       executorch_ref:
         description: "executorch ref (commit SHA or tag)"
         required: true
-        default: "v0.7.0"  # 4b9d44206a99c1ce39315487599971b257a02ed8
-      target:
-        description: "Target to build"
-        type: choice
-        default: all
-        options:
-          - all
-          - win-x64
-          - win-x86
-          - win-arm64
-          - linux-x64
-          - macos-x64
-          - macos-arm64
-          - ios-arm64
-          - android-arm64
-          - android-armv7
-          - android-x64
+        default: &default_ref "v0.7.0"
+      buck2_version:
+        description: "buck2 release version for win-arm64 build"
+        required: true
+        default: &default_buck2 "2025-05-06"
 
 jobs:
   build:
+    env:
+      DEFAULT_REF: *default_ref
+      DEFAULT_BUCK2: *default_buck2
     strategy:
       fail-fast: false
       matrix:
         # https://docs.github.com/en/actions/reference/runners/github-hosted-runners#standard-github-hosted-runners-for-public-repositories
         # https://github.com/actions/runner-images/tree/main
         include:
-        - builder: ubuntu-latest
-          target: linux-x64
-          build_type: Release
+          - builder: windows-11-arm
+            target: win-arm64
 
-        - builder: windows-2025
-          target: win-x64
-          build_type: RelWithDebInfo
+          - builder: windows-2025
+            target: win-x64
 
-        - builder: windows-2025
-          target: win-x86
-          build_type: RelWithDebInfo
+          - builder: windows-2025
+            target: win-x86
 
-        - builder: windows-11-arm
-          target: win-arm64
-          build_type: RelWithDebInfo
+          - builder: ubuntu-latest
+            target: linux-x64
 
-        # Prebuilt PyTorch wheels are no longer available for Intel-based macOS
-        # - builder: macos-15-intel
-        #   target: macos-x64
-        #   build_type: Release
+          # Prebuilt PyTorch wheels are no longer available for Intel-based macOS
+          # - builder: macos-15-intel
+          #   target: macos-x64
 
-        - builder: macos-15
-          target: macos-arm64
-          build_type: Release
+          - builder: macos-15
+            target: macos-arm64
 
-        - builder: macos-15
-          target: ios-arm64
-          build_type: Release
+          - builder: macos-15
+            target: ios-arm64
 
-        - builder: ubuntu-latest
-          target: android-arm64
-          build_type: Release
+          - builder: ubuntu-latest
+            target: android-arm64
 
-        - builder: ubuntu-latest
-          target: android-armv7
-          build_type: Release
+          - builder: ubuntu-latest
+            target: android-armv7
 
-        - builder: ubuntu-latest
-          target: android-x64
-          build_type: Release
+          - builder: ubuntu-latest
+            target: android-x64
 
 
     runs-on: ${{ matrix.builder }}
     defaults:
       run:
         shell: bash
+
     steps:
     - name: Checkout (this)
-      if: ${{ inputs.target == matrix.target || inputs.target == 'all' }}
       uses: actions/checkout@v5
 
     #
     # Setup section
     #
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
     - name: Git config
-      if: startsWith(matrix.builder, 'windows') && (inputs.target == matrix.target || inputs.target == 'all')
+      if: startsWith(matrix.target, 'win-')
       run: |
         git config --global core.longpaths true
         git config --global core.autocrlf true
 
+    - name: Set EXECUTORCH_REF and BUCK2_VERSION
+      run: |
+        set -x
+        echo "EXECUTORCH_REF=${{ inputs.pytorch_ref || env.DEFAULT_REF }}" >> $GITHUB_ENV
+        echo "BUCK2_VERSION=${{ inputs.buck2_version || env.DEFAULT_BUCK2 }}" >> $GITHUB_ENV
+
     # Tell cargo explicitly which linker to use for aarch64-pc-windows-msvc
     - name: Set up cargo linker (win-arm64)
-      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
+      if: matrix.target == 'win-arm64'
       run: |
         link="$VCToolsInstallDir/bin/HostARM64/arm64/link.exe"
         echo "CARGO_TARGET_AARCH64_PC_WINDOWS_MSVC_LINKER=$link" >> "$GITHUB_ENV"
 
     - name: Set up Rust toolchain (win-arm64)
       uses: dtolnay/rust-toolchain@stable
-      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
+      if: matrix.target == 'win-arm64'
       with:
         toolchain: nightly-2025-02-16
         targets: aarch64-pc-windows-msvc
 
     - name: Set up buck2 (win-arm64)
-      if: matrix.target == 'win-arm64' && (inputs.target == matrix.target || inputs.target == 'all')
+      if: matrix.target == 'win-arm64'
       run: |
         set -x
-        tag_url='https://github.com/facebook/buck2/releases/download/2025-05-06/buck2-x86_64-pc-windows-msvc.exe.zst'
+        tag_url="https://github.com/facebook/buck2/releases/download/$BUCK2_VERSION/buck2-x86_64-pc-windows-msvc.exe.zst"
         zst="$RUNNER_TEMP/buck2.exe.zst"
         exe="$RUNNER_TEMP/buck2.exe"
         curl -LfS -o "$zst" "$tag_url"
@@ -121,75 +116,69 @@ jobs:
         buck2 --version
         "$exe" --version || buck2 --version
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
-      with:
-        python-version: 3.12
-
     #
     # Checkout executorch section
     #
 
     - name: Restore executorch_src cache
-      if: inputs.target == matrix.target || inputs.target == 'all'
       id: cache_executorch_src
       uses: actions/cache@v4
       with:
         path: executorch
-        key: cache_executorch_src-${{ inputs.executorch_ref }}
+        key: cache_executorch_src-${{ env.EXECUTORCH_REF }}-${{ startsWith(matrix.target, 'win-') && 'windows' || 'default' }}
 
     - name: Checkout executorch
-      if: steps.cache_executorch_src.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
-      uses: actions/checkout@v4
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
+      uses: actions/checkout@v5
       with:
         submodules: recursive
         repository: pytorch/executorch
-        ref: v0.7.0
+        ref: "${{ env.EXECUTORCH_REF }}"
         path: executorch
 
     - name: Save executorch_src cache
-      if: steps.cache_executorch_src.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
+      if: steps.cache_executorch_src.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: executorch
-        key: cache_executorch_src-${{ inputs.executorch_ref }}
+        key: cache_executorch_src-${{ env.EXECUTORCH_REF }}-${{ startsWith(matrix.target, 'win-') && 'windows' || 'default' }}
+
+    - name: Set EXECUTORCH_SHA
+      run: |
+        set -x
+        cd executorch
+        sha=$(git rev-parse --short=8 HEAD)
+        echo "EXECUTORCH_SHA=$sha" >> $GITHUB_ENV
 
     #
     # Build section
     #
 
-    - name: Install executorch requirements
-      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
-      run: source install_requirements.sh ${{ matrix.target }}
-
-    - name: Save requirements cache
-      if: steps.requirements.outputs.cache-hit != 'true' && (inputs.target == matrix.target || inputs.target == 'all')
-      uses: actions/cache/save@v4
-      with:
-        path: executorch
-        key: requirements-${{ matrix.target }}-${{ hashFiles('install_requirements.sh') }}
+    - name: Prepare
+      run: |
+        set -x
+        source prepare.sh ${{ matrix.target }}
 
     - name: Build executorch dependency
-      if: inputs.target == matrix.target || inputs.target == 'all'
       id: build
       run: |
         set -x
-        source build.sh ${{ matrix.target }} ${{ matrix.build_type }}
+        export ARTIFACT_ROOT="${{github.workspace}}/artifact-root"
+        mkdir -p "$ARTIFACT_ROOT"
 
-        export OUTPUT_ARCHIVE_FILE=vcmi-executorch-${{matrix.target}}.txz
-        tar --create --xz --file "../$OUTPUT_ARCHIVE_FILE" -C out executorch
-        echo "artifact=$OUTPUT_ARCHIVE_FILE" >> $GITHUB_OUTPUT
+        bash -x build.sh ${{ matrix.target }}
+
+        echo "artifact_root=$ARTIFACT_ROOT" >> $GITHUB_OUTPUT
+        echo "artifact_name=vcmi-executorch-${{matrix.target}}-$EXECUTORCH_REF-$EXECUTORCH_SHA" >> $GITHUB_OUTPUT
 
     #
     # Artifact section
     #
 
     - name: Upload artifact
-      if: ${{ inputs.target == matrix.target || inputs.target == 'all' }}
       uses: actions/upload-artifact@v4
       with:
         name: "${{steps.build.outputs.artifact}}"
         path: "${{steps.build.outputs.artifact}}"
-        compression-level: 0
+        compression-level: 9
         if-no-files-found: error
