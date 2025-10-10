@@ -20,7 +20,17 @@ cd executorch
 
 case "$TARGET" in
 win-*)
-    . .venv/Scripts/activate ;;
+    . .venv/Scripts/activate
+    args=(
+        -DCMAKE_PREFIX_PATH="$VIRTUAL_ENV/Lib/site-packages"
+        -DPYTHON_EXECUTABLE="$VIRTUAL_ENV/Scripts/python.exe"
+    )
+    ;;
+android-*)
+    args=(
+        -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
+    )
+    ;;
 *)
     . .venv/bin/activate ;;
 esac
@@ -28,7 +38,7 @@ esac
 cp ../CMakeUserPresets.json ./
 cp ../install_headers.cmake ./
 
-cmake --preset "$TARGET"
+cmake --preset "$TARGET" "${args[@]-}"
 cmake --build --preset "$TARGET" -j3
 cmake --preset "$TARGET" -P install_headers.cmake
 
