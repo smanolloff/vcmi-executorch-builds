@@ -8,6 +8,8 @@ cd executorch
 
 patch_dir=../patch/executorch-$EXECUTORCH_REF
 
+git -c core.autocrlf=false apply $patch_dir/xnndebug.patch
+
 case "$TARGET" in
 win-arm64)
     git -c core.autocrlf=false apply $patch_dir/windows.patch
@@ -44,7 +46,10 @@ win-x86)
     ;;
 *)
     . .venv/bin/activate
+    export PYTHON_EXECUTABLE=$(which python)
     ;;
 esac
+
+echo "PYTHON_EXECUTABLE=$PYTHON_EXECUTABLE" >> $GITHUB_ENV
 
 ./install_requirements.sh

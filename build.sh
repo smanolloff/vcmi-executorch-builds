@@ -25,31 +25,8 @@ win-*)
     . .venv/bin/activate ;;
 esac
 
-case "$TARGET" in
-win-arm64)
-    export PYTHON_EXECUTABLE=$VIRTUAL_ENV/Scripts/python.exe
-    git -c core.autocrlf=false apply ../patch/windows.patch
-    git -c core.autocrlf=false apply --whitespace=nowarn ../patch/windows-arm64.patch
-    ;;
-win-x64)
-    export PYTHON_EXECUTABLE=$VIRTUAL_ENV/Scripts/python.exe
-    git -c core.autocrlf=false apply ../patch/windows.patch
-    ;;
-win-x86)
-    export PYTHON_EXECUTABLE=$VIRTUAL_ENV/Scripts/python.exe
-    git -c core.autocrlf=false apply ../patch/windows.patch
-    git -c core.autocrlf=false apply --whitespace=nowarn ../patch/windows-x86.patch
-    ;;
-android-armv7)
-    # https://github.com/pytorch/executorch/pull/12146
-    git -c core.autocrlf=false apply ../patch/android-armv7.patch
-    ;;
-esac
-
 cp ../CMakeUserPresets.json ./
 cp ../install_headers.cmake ./
-
-git -c core.autocrlf=false apply ../patch/xnndebug.patch
 
 cmake --preset "$TARGET"
 cmake --build --preset "$TARGET" -j3
