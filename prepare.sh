@@ -3,7 +3,7 @@
 set -euxo pipefail
 
 TARGET=$1
-patch_dir="$PWD/executorch-$EXECUTORCH_REF"
+patch_dir="$PWD/patch/executorch-$EXECUTORCH_REF"
 
 cd executorch
 python -m venv .venv
