@@ -34,6 +34,10 @@ android-armv7)
     # https://github.com/pytorch/executorch/pull/12146
     git -c core.autocrlf=false apply "$patch_dir/android-armv7.patch"
     ;;
+android-arm64)
+    . .venv/bin/activate
+    git -c core.autocrlf=false apply --whitespace=nowarn "$patch_dir/android-arm64.patch"
+    ;;
 *)
     . .venv/bin/activate
     ;;

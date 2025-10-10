@@ -159,7 +159,7 @@ jobs:
         set -x
         source prepare.sh ${{ matrix.target }}
 
-    - name: Build executorch dependency
+    - name: Build
       id: build
       run: |
         set -x
