@@ -228,47 +228,47 @@
         {
             "name": "vcmi-win-arm64",
             "inherits": "vcmi-common",
-            "configurePreset": "win-arm64"
+            "configurePreset": "vcmi-win-arm64"
         },
         {
             "name": "vcmi-win-x64",
             "inherits": "vcmi-common",
-            "configurePreset": "win-x64"
+            "configurePreset": "vcmi-win-x64"
         },
         {
             "name": "vcmi-win-x86",
             "inherits": "vcmi-common",
-            "configurePreset": "win-x86"
+            "configurePreset": "vcmi-win-x86"
         },
         {
             "name": "vcmi-linux-x64",
             "inherits": "vcmi-common",
-            "configurePreset": "linux-x64"
+            "configurePreset": "vcmi-linux-x64"
         },
         {
             "name": "vcmi-macos-arm64",
             "inherits": "vcmi-common",
-            "configurePreset": "macos-arm64"
+            "configurePreset": "vcmi-macos-arm64"
         },
         {
             "name": "vcmi-ios-arm64",
             "inherits": "vcmi-common",
-            "configurePreset": "ios-arm64"
+            "configurePreset": "vcmi-ios-arm64"
         },
         {
             "name": "vcmi-android-arm64",
             "inherits": "vcmi-common",
-            "configurePreset": "android-arm64"
+            "configurePreset": "vcmi-android-arm64"
         },
         {
             "name": "vcmi-android-armv7",
             "inherits": "vcmi-common",
-            "configurePreset": "android-armv7"
+            "configurePreset": "vcmi-android-armv7"
         },
         {
             "name": "vcmi-android-x64",
             "inherits": "vcmi-common",
-            "configurePreset": "android-x64"
+            "configurePreset": "vcmi-android-x64"
         }
     ]
 }
