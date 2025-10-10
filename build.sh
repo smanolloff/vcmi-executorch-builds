@@ -38,8 +38,10 @@ esac
 cp ../CMakeUserPresets.json ./
 cp ../install_headers.cmake ./
 
-cmake --preset "$TARGET" "${args[@]-}"
-cmake --build --preset "$TARGET" -j3
-cmake --preset "$TARGET" -P install_headers.cmake
+preset="vcmi-$TARGET"
+
+cmake --preset "$preset" "${args[@]-}"
+cmake --build --preset "$preset" -j3
+cmake --preset "$preset" -P install_headers.cmake
 
 mv out/executorch "$ARTIFACT_ROOT/executorch"
