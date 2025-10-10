@@ -6,21 +6,23 @@ TARGET=$1
 
 cd executorch
 
+patch_dir=../patch/executorch-$EXECUTORCH_REF
+
 case "$TARGET" in
 win-arm64)
-    git -c core.autocrlf=false apply ../patch/windows.patch
-    git -c core.autocrlf=false apply --whitespace=nowarn ../patch/windows-arm64.patch
+    git -c core.autocrlf=false apply $patch_dir/windows.patch
+    git -c core.autocrlf=false apply --whitespace=nowarn $patch_dir/windows-arm64.patch
     ;;
 win-x64)
-    git -c core.autocrlf=false apply ../patch/windows.patch
+    git -c core.autocrlf=false apply $patch_dir/windows.patch
     ;;
 win-x86)
-    git -c core.autocrlf=false apply ../patch/windows.patch
-    git -c core.autocrlf=false apply --whitespace=nowarn ../patch/windows-x86.patch
+    git -c core.autocrlf=false apply $patch_dir/windows.patch
+    git -c core.autocrlf=false apply --whitespace=nowarn $patch_dir/windows-x86.patch
     ;;
 android-armv7)
     # https://github.com/pytorch/executorch/pull/12146
-    git -c core.autocrlf=false apply ../patch/android-armv7.patch
+    git -c core.autocrlf=false apply $patch_dir/android-armv7.patch
     ;;
 esac
 
