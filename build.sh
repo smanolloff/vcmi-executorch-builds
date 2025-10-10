@@ -58,7 +58,7 @@ cp ../install_headers.cmake ./
 git -c core.autocrlf=false apply ../patch/xnndebug.patch
 
 cmake --preset "$TARGET" "${flags[@]}"
-cmake --build --preset "$TARGET" --config $BUILD_TYPE -j3
+cmake --build --preset "$TARGET" -j3
 cmake --preset "$TARGET" -P install_headers.cmake
 
 mv out/executorch "$ARTIFACT_ROOT/executorch"
