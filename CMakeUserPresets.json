@@ -32,6 +32,11 @@
             "name": "base-release",
             "hidden": true,
             "binaryDir": "${sourceDir}/out/build",
+            "$comment": [
+                "On non-windows builds, 'CMAKE_BUILD_TYPE' is used.",
+                "It must correspond to VCMI's build type for non-windows targets",
+                "(for VCMI 1.7 this is Release)."
+            ],
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "EXECUTORCH_BUILD_DEVTOOLS": "OFF",
@@ -215,7 +220,11 @@
             "hidden": true,
             "targets": ["install"],
             "cleanFirst": true,
-            "$comment": ["On windows, 'configuration' is used instead of CMAKE_BUILD_TYPE"],
+            "$comment": [
+                "On windows, 'configuration' is used instead of CMAKE_BUILD_TYPE",
+                "It must correspond to VCMI's build type for windows targets",
+                "(for VCMI 1.7 this is RelWithDebInfo)."
+            ],
             "configuration": "RelWithDebInfo"
         },
         {

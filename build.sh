@@ -25,12 +25,6 @@ win-*)
     . .venv/bin/activate ;;
 esac
 
-flags=("-DCMAKE_BUILD_TYPE=$BUILD_TYPE")
-
-# XXX: this must correspond to VCMI's build type for the corresponding target
-# As of VCMI 1.7 this is Release (default) or RelWithDebInfo (windows).
-build_type=Release
-
 case "$TARGET" in
 win-arm64)
     export PYTHON_EXECUTABLE=$VIRTUAL_ENV/Scripts/python.exe
@@ -57,7 +51,7 @@ cp ../install_headers.cmake ./
 
 git -c core.autocrlf=false apply ../patch/xnndebug.patch
 
-cmake --preset "$TARGET" "${flags[@]}"
+cmake --preset "$TARGET"
 cmake --build --preset "$TARGET" -j3
 cmake --preset "$TARGET" -P install_headers.cmake
 
