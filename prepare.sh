@@ -36,6 +36,7 @@ android-armv7)
     ;;
 android-arm64)
     . .venv/bin/activate
+    # Fixes "fatal error: 'gflags/gflags.h' file not found" from executor_runner.cpp
     git -c core.autocrlf=false apply --whitespace=nowarn "$patch_dir/android-arm64.patch"
     ;;
 *)
