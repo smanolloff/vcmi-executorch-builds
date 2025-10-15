@@ -40,6 +40,8 @@ android-*)
     # Verify
     which glslc
     glslc --version
+
+    find "$ANDROID_NDK" -type f -name '*.cmake'
     args=(
         -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
         # -DCMAKE_MAKE_PROGRAM="$(which make)"
