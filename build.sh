@@ -28,8 +28,11 @@ win-*)
     ;;
 android-*)
     . .venv/bin/activate
+    # brew install shaderc spirv-tools
+
     # sudo apt-get update && sudo apt-get install -y shaderc
-    brew install shaderc spirv-tools
+    sudo apt update
+    sudo apt install glslc
     # Verify
     glslc --version
     args=(

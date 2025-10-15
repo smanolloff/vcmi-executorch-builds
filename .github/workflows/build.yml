@@ -48,8 +48,8 @@ jobs:
           # - builder: macos-15
           #   target: ios-arm64
 
-          # - builder: ubuntu-latest
-          - builder: macos-15
+          - builder: ubuntu-latest
+          # - builder: macos-15
             target: android-arm64
 
           # - builder: ubuntu-latest
