@@ -48,7 +48,7 @@ jobs:
           # - builder: macos-15
           #   target: ios-arm64
 
-          - builder: macos-15
+          - builder: ubuntu-latest
             target: android-arm64
 
           # - builder: ubuntu-latest
