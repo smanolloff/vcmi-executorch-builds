@@ -28,7 +28,7 @@ win-*)
     ;;
 android-*)
     . .venv/bin/activate
-    sudo apt-get update && sudo apt-get install -y shaderc
+    # sudo apt-get update && sudo apt-get install -y shaderc
     args=(
         # -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
         # -DCMAKE_MAKE_PROGRAM="$(which make)"
