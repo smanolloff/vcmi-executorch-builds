@@ -162,7 +162,8 @@
                 "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/third-party/ios-cmake/ios.toolchain.cmake",
                 "EXECUTORCH_BUILD_PRESET_FILE": "${sourceDir}/tools/cmake/preset/ios.cmake",
                 "PLATFORM": "OS64",
-                "DEPLOYMENT_TARGET": "17.0"
+                "DEPLOYMENT_TARGET": "17.0",
+                "EXECUTORCH_BUILD_COREML": "ON"
             }
         },
         {
