@@ -116,6 +116,14 @@ jobs:
         buck2 --version
         "$exe" --version || buck2 --version
 
+    - name: Set up NDK r25c
+      if: startsWith(matrix.target, 'android-')
+      run: |
+        wget https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip android-ndk-r25c-linux.zip -d $HOME
+        echo "ANDROID_NDK_HOME=$HOME/android-ndk-r25c" >> $GITHUB_ENV
+        echo "$HOME/android-ndk-r25c" >> $GITHUB_PATH
+
     #
     # Checkout executorch section
     #
